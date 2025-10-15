@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aplikasi Kuis & Ujian Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        /* Custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-pink-300 via-purple-300 to-blue-300 min-h-screen flex items-center justify-center p-4">
+
+    <div id="app" class="w-full max-w-4xl mx-auto">
+
+        <!-- SCREEN: KODE KUIS -->
+        <div id="quizCodeScreen" class="w-full max-w-md mx-auto">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg text-center">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Masukkan Kode Kuis</h1>
+                <input id="quizCodeInput" type="text" placeholder="Contoh: K-123" class="w-full p-3 border border-gray-300 rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="handleQuizCode()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Lanjutkan</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: LOGIN -->
+        <div id="loginScreen" class="hidden w-full max-w-md mx-auto">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Login</h1>
+                <div class="mb-4">
+                    <label for="username" class="block text-gray-700 font-semibold mb-2">Username</label>
+                    <input id="username" type="text" placeholder="Masukkan username" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label for="password" class="block text-gray-700 font-semibold mb-2">Password</label>
+                    <input id="password" type="password" placeholder="Masukkan password" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button onclick="handleLogin()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Masuk</button>
+                <p id="loginError" class="text-red-500 text-center mt-4"></p>
+                <button onclick="showScreen('quizCodeScreen')" class="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali</button>
+            </div>
+        </div>
+        
+        <!-- SCREEN: ADMIN DASHBOARD -->
+        <div id="adminDashboard" class="hidden w-full max-w-md mx-auto text-center">
+             <div class="glassmorphism p-8 rounded-2xl shadow-lg">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6">Dashboard Admin</h1>
+                <button onclick="showScreen('manageQuestionsScreen'); renderManageQuestions();" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-3 px-4 rounded-lg mb-4 transition-transform transform hover:scale-105">Manajemen Soal</button>
+                <button onclick="showScreen('manageUsersScreen'); renderManageUsers();" class="w-full bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg mb-4 transition-transform transform hover:scale-105">Manajemen Pengguna</button>
+                <button onclick="showScreen('quizSettingsScreen'); renderQuizSettings();" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg mb-4 transition-transform transform hover:scale-105">Pengaturan Waktu & Soal</button>
+                <button onclick="showCustomCodeModal()" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Buat Kode Kuis</button>
+                <button onclick="logout()" class="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Logout</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: PENGATURAN KUIS -->
+        <div id="quizSettingsScreen" class="hidden">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg w-full max-w-md mx-auto">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Pengaturan Kuis</h1>
+                
+                <div class="mb-4">
+                    <label for="timeLimitInput" class="block text-gray-700 font-semibold mb-2">Batas Waktu Pengerjaan (menit)</label>
+                    <input type="number" id="timeLimitInput" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="1">
+                </div>
+
+                <div class="mb-6">
+                    <label for="maxQuestionsInput" class="block text-gray-700 font-semibold mb-2">Jumlah Soal Maksimal Ditampilkan</label>
+                    <input type="number" id="maxQuestionsInput" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" min="1">
+                </div>
+
+                <button onclick="saveQuizSettings()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Simpan Pengaturan</button>
+                <button onclick="showScreen('adminDashboard')" class="w-full mt-4 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali ke Dashboard</button>
+            </div>
+        </div>
+
+
+        <!-- SCREEN: MANAJEMEN PENGGUNA -->
+        <div id="manageUsersScreen" class="hidden">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg w-full">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Manajemen Pengguna (Siswa)</h1>
+                
+                <!-- Form Tambah Pengguna -->
+                <div class="mb-8 p-6 border rounded-lg bg-white/50">
+                    <h2 class="text-xl font-semibold mb-4">Tambah Pengguna Baru</h2>
+                    <input type="text" id="newUsername" placeholder="Username Baru" class="w-full p-2 border rounded-lg mb-2">
+                    <input type="password" id="newPassword" placeholder="Password Baru" class="w-full p-2 border rounded-lg mb-2">
+                    <button onclick="addUser()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Tambah Pengguna</button>
+                </div>
+
+                <!-- Daftar Pengguna -->
+                <h2 class="text-xl font-semibold mb-4 text-center">Daftar Pengguna</h2>
+                <div id="userList" class="max-h-96 overflow-y-auto custom-scrollbar pr-4">
+                    <!-- Daftar pengguna akan ditampilkan di sini -->
+                </div>
+                 <button onclick="showScreen('adminDashboard')" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali ke Dashboard</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: MANAJEMEN SOAL -->
+        <div id="manageQuestionsScreen" class="hidden">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg w-full">
+                <h1 class="text-2xl font-bold text-gray-800 mb-6 text-center">Manajemen Soal</h1>
+                
+                <!-- Form Tambah Soal -->
+                <div class="mb-8 p-6 border rounded-lg bg-white/50">
+                    <h2 class="text-xl font-semibold mb-4">Tambah Soal Baru</h2>
+                    <select id="newQuestionType" class="w-full p-2 border rounded-lg mb-2">
+                        <option value="mcq">Pilihan Ganda</option>
+                        <option value="essay">Esai</option>
+                    </select>
+                    <textarea id="newQuestionText" placeholder="Tulis pertanyaan di sini..." class="w-full p-2 border rounded-lg mb-2" rows="3"></textarea>
+                    <div id="mcqOptionsContainer">
+                        <input type="text" id="newOptionA" placeholder="Pilihan A" class="w-full p-2 border rounded-lg mb-2">
+                        <input type="text" id="newOptionB" placeholder="Pilihan B" class="w-full p-2 border rounded-lg mb-2">
+                        <input type="text" id="newOptionC" placeholder="Pilihan C" class="w-full p-2 border rounded-lg mb-2">
+                        <input type="text" id="newOptionD" placeholder="Pilihan D" class="w-full p-2 border rounded-lg mb-2">
+                        <select id="newCorrectAnswer" class="w-full p-2 border rounded-lg mb-2">
+                            <option value="A">Jawaban Benar: A</option>
+                            <option value="B">Jawaban Benar: B</option>
+                            <option value="C">Jawaban Benar: C</option>
+                            <option value="D">Jawaban Benar: D</option>
+                        </select>
+                    </div>
+                    <button onclick="addQuestion()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Tambah Soal</button>
+                </div>
+
+                <!-- Daftar Soal -->
+                <h2 class="text-xl font-semibold mb-4 text-center">Daftar Soal</h2>
+                <div id="questionList" class="max-h-96 overflow-y-auto custom-scrollbar pr-4">
+                    <!-- Soal akan ditampilkan di sini oleh JavaScript -->
+                </div>
+                 <button onclick="showScreen('adminDashboard')" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali ke Menu Utama</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: INFO SISWA -->
+        <div id="studentInfoScreen" class="hidden w-full max-w-md mx-auto">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg">
+                <h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Informasi Peserta</h1>
+                <div class="mb-4">
+                    <label for="studentName" class="block text-gray-700 font-semibold mb-2">Nama Lengkap</label>
+                    <input id="studentName" type="text" placeholder="Masukkan nama lengkap" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="mb-6">
+                    <label for="studentClass" class="block text-gray-700 font-semibold mb-2">Kelas</label>
+                    <input id="studentClass" type="text" placeholder="Masukkan kelas" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button onclick="startQuiz()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition-transform transform hover:scale-105">Mulai Kuis</button>
+                <button onclick="showScreen('loginScreen')" class="w-full mt-2 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali</button>
+            </div>
+        </div>
+
+        <!-- SCREEN: KUIS BERLANGSUNG -->
+        <div id="quizScreen" class="hidden">
+             <div class="glassmorphism p-8 rounded-2xl shadow-lg w-full">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 id="questionCounter" class="text-xl font-bold text-gray-800">Soal 1 dari 10</h2>
+                    <div id="timer" class="text-lg font-bold bg-red-500 text-white px-4 py-2 rounded-lg">10:00</div>
+                </div>
+                <div class="mb-6">
+                    <p id="questionText" class="text-lg text-gray-700 leading-relaxed"></p>
+                </div>
+                <div id="answerOptions" class="space-y-3">
+                    <!-- Opsi jawaban akan ditampilkan di sini -->
+                </div>
+                <div class="mt-8 flex justify-between">
+                    <button id="prevButton" onclick="prevQuestion()" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">Kembali</button>
+                    <button id="nextButton" onclick="nextQuestion()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-6 rounded-lg transition-transform transform hover:scale-105">Selanjutnya</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SCREEN: HASIL KUIS -->
+        <div id="resultsScreen" class="hidden">
+            <div class="glassmorphism p-8 rounded-2xl shadow-lg w-full">
+                <h1 class="text-3xl font-bold text-center text-gray-800 mb-4">Hasil Kuis</h1>
+                <div class="text-center mb-6 bg-blue-100 p-4 rounded-lg">
+                    <p class="text-lg text-gray-700">Nama: <span id="resultName" class="font-semibold"></span></p>
+                    <p class="text-lg text-gray-700">Kelas: <span id="resultClass" class="font-semibold"></span></p>
+                     <p class="text-lg text-gray-700">Tanggal: <span id="resultDate" class="font-semibold"></span></p>
+                    <p class="text-2xl font-bold text-blue-600 mt-2">Skor Anda: <span id="resultScore"></span></p>
+                </div>
+                
+                <div class="mb-8">
+                    <h2 class="text-xl font-semibold mb-4 text-center">Rincian Jawaban</h2>
+                    <div id="answerReview" class="space-y-4 max-h-60 overflow-y-auto custom-scrollbar pr-2"></div>
+                </div>
+
+                <div>
+                    <h2 class="text-xl font-semibold mb-4 text-center">Leaderboard</h2>
+                    <table class="w-full text-left rounded-lg overflow-hidden">
+                        <thead class="bg-gray-200">
+                            <tr>
+                                <th class="p-3 font-semibold">Peringkat</th>
+                                <th class="p-3 font-semibold">Nama</th>
+                                <th class="p-3 font-semibold">Kelas</th>
+                                <th class="p-3 font-semibold">Skor</th>
+                            </tr>
+                        </thead>
+                        <tbody id="leaderboardBody" class="bg-white">
+                        </tbody>
+                    </table>
+                </div>
+                <button onclick="showScreen('studentInfoScreen')" class="w-full mt-6 bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">Kembali</button>
+            </div>
+        </div>
+        
+        <!-- MODAL: CUSTOM KODE KUIS -->
+        <div id="customCodeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+            <div class="bg-white p-8 rounded-lg shadow-lg text-center max-w-sm w-full">
+                <h2 class="text-xl font-bold mb-4">Atur & Bagikan Kode Kuis</h2>
+                <p class="text-gray-600 mb-4">Masukkan kode unik untuk kuis ini.</p>
+                <input id="customCodeInput" type="text" placeholder="Contoh: ULANGAN-FISIKA" class="w-full p-2 border rounded text-center mb-4">
+                <p class="text-gray-600 mb-4">Bagikan link di bawah ini:</p>
+                <input id="shareLinkInput" type="text" readonly class="w-full p-2 border rounded bg-gray-100 text-center mb-4">
+                <button onclick="saveAndCopyLink()" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg mr-2">Simpan & Salin</button>
+                <button onclick="closeCustomCodeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg">Tutup</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- STATE APLIKASI ---
+        let questions = [
+            { type: 'mcq', text: 'Apa ibukota Indonesia?', options: { A: 'Bandung', B: 'Surabaya', C: 'Jakarta', D: 'Medan' }, answer: 'C' },
+            { type: 'mcq', text: 'Siapakah presiden pertama Indonesia?', options: { A: 'Soeharto', B: 'Soekarno', C: 'B.J. Habibie', D: 'Joko Widodo' }, answer: 'B' },
+            { type: 'essay', text: 'Jelaskan secara singkat tentang Sumpah Pemuda.' },
+            { type: 'mcq', text: 'Rumus kimia untuk air adalah...', options: { A: 'O2', B: 'CO2', C: 'H2O', D: 'NaCl' }, answer: 'C' },
+            { type: 'essay', text: 'Sebutkan 3 sila pertama dari Pancasila.' },
+        ];
+
+        let quizSettings = {
+            maxQuestions: 45,
+            timeLimitMinutes: 10
+        };
+
+        let currentQuestionIndex = 0;
+        let userAnswers = [];
+        let timerInterval;
+        let leaderboard = [
+            { name: 'Budi', studentClass: 'XII-A', score: 80 },
+            { name: 'Ani', studentClass: 'XII-B', score: 95 }
+        ];
+        let currentUser = {};
+        
+        const ADMIN_USERNAME = 'JUKI123';
+        const ADMIN_PASSWORD = 'NOPI123';
+        let validQuizCode = 'K-123'; // Kode kuis default, bisa diubah admin
+
+        // Data pengguna siswa (bisa diganti dengan data dari database nantinya)
+        let studentUsers = [
+            { username: 'siswa1', password: '123' },
+            { username: 'siswa2', password: '456' },
+            { username: 'budi_s', password: 'password123' }
+        ];
+
+        // --- FUNGSI NAVIGASI ---
+        function showScreen(screenId) {
+            document.querySelectorAll('#app > div').forEach(div => {
+                if (!div.id.includes('Modal')) div.classList.add('hidden');
+            });
+            document.getElementById(screenId).classList.remove('hidden');
+        }
+
+        // --- FUNGSI AUTENTIKASI ---
+         function handleQuizCode() {
+            const code = document.getElementById('quizCodeInput').value;
+            if (code === validQuizCode) {
+                showScreen('loginScreen');
+            } else {
+                alert('Kode kuis salah!');
+            }
+        }
+        
+        function handleLogin() {
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const errorEl = document.getElementById('loginError');
+
+            if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+                errorEl.textContent = '';
+                showScreen('adminDashboard');
+            } else {
+                const student = studentUsers.find(user => user.username === username && user.password === password);
+                if (student) {
+                    errorEl.textContent = '';
+                    showScreen('studentInfoScreen');
+                } else {
+                    errorEl.textContent = 'Username atau Password salah!';
+                }
+            }
+        }
+        
+        function logout() {
+            document.getElementById('username').value = '';
+            document.getElementById('password').value = '';
+            showScreen('loginScreen');
+        }
+
+        // --- FUNGSI PENGATURAN KUIS (ADMIN) ---
+        function renderQuizSettings() {
+            document.getElementById('timeLimitInput').value = quizSettings.timeLimitMinutes;
+            document.getElementById('maxQuestionsInput').value = quizSettings.maxQuestions;
+        }
+
+        function saveQuizSettings() {
+            const newTime = parseInt(document.getElementById('timeLimitInput').value);
+            const newMaxQuestions = parseInt(document.getElementById('maxQuestionsInput').value);
+
+            if (isNaN(newTime) || newTime < 1 || isNaN(newMaxQuestions) || newMaxQuestions < 1) {
+                alert("Input tidak valid. Waktu dan jumlah soal harus angka lebih dari 0.");
+                return;
+            }
+
+            quizSettings.timeLimitMinutes = newTime;
+            quizSettings.maxQuestions = newMaxQuestions;
+            alert("Pengaturan berhasil disimpan!");
+            showScreen('adminDashboard');
+        }
+
+
+        // --- FUNGSI MANAJEMEN PENGGUNA (ADMIN) ---
+        function renderManageUsers() {
+            const userListContainer = document.getElementById('userList');
+            userListContainer.innerHTML = '';
+            studentUsers.forEach((user, index) => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'flex justify-between items-center p-3 border rounded-lg mb-2 bg-white';
+                userDiv.innerHTML = `
+                    <span>${user.username}</span>
+                    <button onclick="deleteUser(${index})" class="bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg">Hapus</button>
+                `;
+                userListContainer.appendChild(userDiv);
+            });
+        }
+
+        function addUser() {
+            const usernameInput = document.getElementById('newUsername');
+            const passwordInput = document.getElementById('newPassword');
+            const username = usernameInput.value.trim();
+            const password = passwordInput.value.trim();
+
+            if (!username || !password) {
+                alert('Username dan Password tidak boleh kosong!');
+                return;
+            }
+
+            if (studentUsers.some(user => user.username === username)) {
+                alert('Username sudah ada!');
+                return;
+            }
+
+            studentUsers.push({ username, password });
+            renderManageUsers();
+            usernameInput.value = '';
+            passwordInput.value = '';
+        }
+
+        function deleteUser(index) {
+            // Hapus konfirmasi karena mungkin diblokir di beberapa environment
+            studentUsers.splice(index, 1);
+            renderManageUsers();
+        }
+
+
+        // --- FUNGSI MANAJEMEN SOAL (ADMIN) ---
+        function renderManageQuestions() {
+            const listContainer = document.getElementById('questionList');
+            listContainer.innerHTML = '';
+            questions.forEach((q, index) => {
+                const questionDiv = document.createElement('div');
+                questionDiv.className = 'p-4 border rounded-lg mb-4 bg-white';
+                let optionsHTML = '';
+                if (q.type === 'mcq') {
+                    optionsHTML = `
+                        <ul class="list-disc list-inside text-sm text-gray-600">
+                            ${Object.entries(q.options).map(([key, value]) => `<li>${key}: ${value} ${key === q.answer ? '<span class="font-bold text-green-600">(Benar)</span>' : ''}</li>`).join('')}
+                        </ul>`;
+                }
+                questionDiv.innerHTML = `
+                    <p class="font-semibold">${index + 1}. [${q.type.toUpperCase()}] ${q.text}</p>
+                    ${optionsHTML}
+                    <button onclick="deleteQuestion(${index})" class="mt-2 bg-red-500 hover:bg-red-600 text-white text-sm font-bold py-1 px-3 rounded-lg">Hapus</button>
+                `;
+                listContainer.appendChild(questionDiv);
+            });
+        }
+        
+        function addQuestion() {
+            const type = document.getElementById('newQuestionType').value;
+            const text = document.getElementById('newQuestionText').value;
+            
+            if (!text) {
+                alert('Pertanyaan tidak boleh kosong!');
+                return;
+            }
+            
+            let newQuestion = { type, text };
+            
+            if (type === 'mcq') {
+                const options = {
+                    A: document.getElementById('newOptionA').value,
+                    B: document.getElementById('newOptionB').value,
+                    C: document.getElementById('newOptionC').value,
+                    D: document.getElementById('newOptionD').value,
+                };
+                const answer = document.getElementById('newCorrectAnswer').value;
+                if (!options.A || !options.B || !options.C || !options.D) {
+                    alert('Semua pilihan jawaban harus diisi!');
+                    return;
+                }
+                newQuestion.options = options;
+                newQuestion.answer = answer;
+            }
+            
+            questions.push(newQuestion);
+            renderManageQuestions();
+            // Reset form
+            document.getElementById('newQuestionText').value = '';
+            document.getElementById('newOptionA').value = '';
+            document.getElementById('newOptionB').value = '';
+            document.getElementById('newOptionC').value = '';
+            document.getElementById('newOptionD').value = '';
+        }
+
+        function deleteQuestion(index) {
+            // Hapus konfirmasi karena mungkin diblokir di beberapa environment
+            questions.splice(index, 1);
+            renderManageQuestions();
+        }
+        
+        // Listener untuk form tambah soal
+        document.getElementById('newQuestionType').addEventListener('change', (e) => {
+            const mcqContainer = document.getElementById('mcqOptionsContainer');
+            if (e.target.value === 'mcq') {
+                mcqContainer.style.display = 'block';
+            } else {
+                mcqContainer.style.display = 'none';
+            }
+        });
+
+        // --- FUNGSI KUIS (SISWA) ---
+        let shuffledQuestions = [];
+
+        function startQuiz() {
+            const name = document.getElementById('studentName').value;
+            const studentClass = document.getElementById('studentClass').value;
+
+            if (!name || !studentClass) {
+                alert('Nama dan Kelas harus diisi!');
+                return;
+            }
+            
+            currentUser = { name, studentClass };
+            currentQuestionIndex = 0;
+            userAnswers = new Array(questions.length).fill(null);
+            
+            // Pengacakan urutan soal
+            shuffledQuestions = [...questions].sort(() => Math.random() - 0.5).slice(0, quizSettings.maxQuestions);
+            
+            displayQuestion();
+            showScreen('quizScreen');
+            startTimer();
+        }
+
+        function displayQuestion() {
+            if (currentQuestionIndex >= shuffledQuestions.length) return;
+
+            const q = shuffledQuestions[currentQuestionIndex];
+            document.getElementById('questionCounter').textContent = `Soal ${currentQuestionIndex + 1} dari ${shuffledQuestions.length}`;
+            document.getElementById('questionText').textContent = q.text;
+
+            const answerContainer = document.getElementById('answerOptions');
+            answerContainer.innerHTML = '';
+
+            if (q.type === 'mcq') {
+                Object.entries(q.options).forEach(([key, value]) => {
+                    const isChecked = userAnswers[currentQuestionIndex] === key;
+                    answerContainer.innerHTML += `
+                        <label class="flex items-center p-3 border rounded-lg cursor-pointer hover:bg-blue-100 transition-colors">
+                            <input type="radio" name="option" value="${key}" class="mr-3" ${isChecked ? 'checked' : ''}>
+                            <span>${key}. ${value}</span>
+                        </label>`;
+                });
+            } else if (q.type === 'essay') {
+                const savedAnswer = userAnswers[currentQuestionIndex] || '';
+                answerContainer.innerHTML = `
+                    <textarea id="essayAnswer" class="w-full p-3 border rounded-lg" rows="5" placeholder="Tulis jawaban esai Anda di sini...">${savedAnswer}</textarea>`;
+            }
+            
+            // Update tombol navigasi
+            document.getElementById('prevButton').style.visibility = currentQuestionIndex === 0 ? 'hidden' : 'visible';
+            document.getElementById('nextButton').textContent = currentQuestionIndex === shuffledQuestions.length - 1 ? 'Kirim Jawaban' : 'Selanjutnya';
+        }
+        
+        function saveAnswer() {
+            const q = shuffledQuestions[currentQuestionIndex];
+            if (q.type === 'mcq') {
+                const selectedOption = document.querySelector('input[name="option"]:checked');
+                if (selectedOption) {
+                    userAnswers[currentQuestionIndex] = selectedOption.value;
+                }
+            } else if (q.type === 'essay') {
+                userAnswers[currentQuestionIndex] = document.getElementById('essayAnswer').value;
+            }
+        }
+
+        function nextQuestion() {
+            saveAnswer();
+            if (currentQuestionIndex < shuffledQuestions.length - 1) {
+                currentQuestionIndex++;
+                displayQuestion();
+            } else {
+                submitQuiz();
+            }
+        }
+
+        function prevQuestion() {
+            if (currentQuestionIndex > 0) {
+                saveAnswer();
+                currentQuestionIndex--;
+                displayQuestion();
+            }
+        }
+
+        function submitQuiz() {
+            clearInterval(timerInterval);
+            calculateScore();
+            updateLeaderboard();
+            displayResults();
+            showScreen('resultsScreen');
+        }
+        
+        function calculateScore() {
+            let correctAnswers = 0;
+            shuffledQuestions.forEach((q, index) => {
+                if (q.type === 'mcq' && q.answer === userAnswers[index]) {
+                    correctAnswers++;
+                }
+            });
+            const mcqCount = shuffledQuestions.filter(q => q.type === 'mcq').length;
+            currentUser.score = mcqCount > 0 ? Math.round((correctAnswers / mcqCount) * 100) : 0;
+        }
+
+        function displayResults() {
+            document.getElementById('resultName').textContent = currentUser.name;
+            document.getElementById('resultClass').textContent = currentUser.studentClass;
+            document.getElementById('resultScore').textContent = `${currentUser.score} (dari soal pilihan ganda)`;
+            document.getElementById('resultDate').textContent = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+
+            const reviewContainer = document.getElementById('answerReview');
+            reviewContainer.innerHTML = '';
+            shuffledQuestions.forEach((q, index) => {
+                const userAnswer = userAnswers[index];
+                let resultHTML = '';
+                if (q.type === 'mcq') {
+                    const isCorrect = q.answer === userAnswer;
+                    resultHTML = `
+                        <div class="p-3 rounded-lg ${isCorrect ? 'bg-green-100' : 'bg-red-100'}">
+                            <p class="font-semibold">${index + 1}. ${q.text}</p>
+                            <p class="text-sm">Jawaban Anda: ${userAnswer || 'Tidak dijawab'} (${q.options[userAnswer] || ''}) - ${isCorrect ? '<span class="font-bold text-green-700">Benar</span>' : '<span class="font-bold text-red-700">Salah</span>'}</p>
+                            ${!isCorrect ? `<p class="text-sm">Jawaban Benar: ${q.answer} (${q.options[q.answer]})</p>` : ''}
+                        </div>
+                    `;
+                } else {
+                    resultHTML = `
+                        <div class="p-3 rounded-lg bg-gray-100">
+                            <p class="font-semibold">${index + 1}. ${q.text}</p>
+                            <p class="text-sm">Jawaban Anda: <pre class="whitespace-pre-wrap font-sans">${userAnswer || 'Tidak dijawab'}</pre></p>
+                        </div>
+                    `;
+                }
+                reviewContainer.innerHTML += resultHTML;
+            });
+
+            // Display Leaderboard
+            const leaderboardBody = document.getElementById('leaderboardBody');
+            leaderboardBody.innerHTML = '';
+            leaderboard.sort((a, b) => b.score - a.score); // Sort descending
+            leaderboard.forEach((entry, index) => {
+                leaderboardBody.innerHTML += `
+                    <tr class="border-b">
+                        <td class="p-3">${index + 1}</td>
+                        <td class="p-3">${entry.name}</td>
+                        <td class="p-3">${entry.studentClass}</td>
+                        <td class="p-3 font-bold">${entry.score}</td>
+                    </tr>`;
+            });
+        }
+        
+        function updateLeaderboard() {
+            // Cek jika user sudah ada di leaderboard, update skornya
+            const existingUserIndex = leaderboard.findIndex(u => u.name === currentUser.name && u.studentClass === currentUser.studentClass);
+            if (existingUserIndex > -1) {
+                if (leaderboard[existingUserIndex].score < currentUser.score) {
+                    leaderboard[existingUserIndex].score = currentUser.score;
+                }
+            } else {
+                leaderboard.push(currentUser);
+            }
+        }
+
+        // --- FUNGSI TIMER ---
+        function startTimer() {
+            let timeRemaining = quizSettings.timeLimitMinutes * 60;
+            const timerEl = document.getElementById('timer');
+
+            timerInterval = setInterval(() => {
+                const minutes = Math.floor(timeRemaining / 60);
+                let seconds = timeRemaining % 60;
+                seconds = seconds < 10 ? '0' + seconds : seconds;
+                timerEl.textContent = `${minutes}:${seconds}`;
+
+                if (--timeRemaining < 0) {
+                    clearInterval(timerInterval);
+                    // alert("Waktu habis!"); // Dihapus karena bisa memblokir eksekusi
+                    submitQuiz();
+                }
+            }, 1000);
+        }
+        
+        // --- FUNGSI BAGIKAN KUIS ---
+        function showShareModal() {
+            const link = `${window.location.href.split('?')[0]}?quizCode=${VALID_QUIZ_CODE}`;
+            document.getElementById('shareLinkInput').value = link;
+            document.getElementById('shareModal').classList.remove('hidden');
+        }
+
+        function closeShareModal() {
+            document.getElementById('shareModal').classList.add('hidden');
+        }
+
+        function copyLink() {
+            const linkInput = document.getElementById('shareLinkInput');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999); // For mobile devices
+            document.execCommand('copy');
+            alert('Link berhasil disalin!');
+        }
+        
+        // --- INISIALISASI ---
+        window.onload = () => {
+             // Cek jika ada quiz code di URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const quizCode = urlParams.get('quizCode');
+
+            if (quizCode) {
+                validQuizCode = quizCode; // Terima kode dari URL jika ada
+                document.getElementById('quizCodeInput').value = quizCode;
+                showScreen('loginScreen');
+            } else {
+                showScreen('quizCodeScreen');
+            }
+        };
+
+        // --- FUNGSI CUSTOM KODE KUIS ---
+        function showCustomCodeModal() {
+            document.getElementById('customCodeInput').value = validQuizCode;
+            updateShareLink();
+            document.getElementById('customCodeModal').classList.remove('hidden');
+        }
+
+        function closeCustomCodeModal() {
+            document.getElementById('customCodeModal').classList.add('hidden');
+        }
+
+        function updateShareLink() {
+            const code = document.getElementById('customCodeInput').value;
+            const link = `${window.location.href.split('?')[0]}?quizCode=${code}`;
+            document.getElementById('shareLinkInput').value = link;
+        }
+
+        function saveAndCopyLink() {
+            const newCode = document.getElementById('customCodeInput').value.trim();
+            if (!newCode) {
+                alert('Kode kuis tidak boleh kosong!');
+                return;
+            }
+            validQuizCode = newCode;
+            updateShareLink();
+            
+            const linkInput = document.getElementById('shareLinkInput');
+            linkInput.select();
+            linkInput.setSelectionRange(0, 99999);
+            document.execCommand('copy');
+            alert(`Kode kuis diubah menjadi "${validQuizCode}" dan link berhasil disalin!`);
+        }
+
+        // Update link secara dinamis saat admin mengetik kode baru
+        document.getElementById('customCodeInput').addEventListener('input', updateShareLink);
+
+
+    </script>
+</body>
+</html>
